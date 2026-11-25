@@ -1,0 +1,261 @@
+@import "tailwindcss";
+
+@theme {
+  --color-workspace: #fafafa;
+  --color-paper: #fff;
+  --color-ink: #111;
+  --color-muted: #5e5e5e;
+  --color-line: #e5e5e5;
+  --color-subtle: #f2f2f2;
+  --color-studio: #141414;
+  --color-stage-muted: #bdbdbd;
+  --color-control: #383838;
+  --color-stage-highlight: #fff;
+  --font-sans: system-ui, "PingFang SC", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, monospace;
+}
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-control);
+    outline-offset: 3px;
+  }
+
+  .preview-field :focus-visible {
+    outline-color: var(--color-stage-highlight);
+  }
+}
+
+@layer components {
+  .brand-type {
+    font-family: "Avenir Next", system-ui, sans-serif;
+    font-weight: 690;
+  }
+
+  .button {
+    @apply inline-flex min-h-9 cursor-pointer items-center justify-center gap-2 rounded-md px-3 text-[13px] font-semibold whitespace-nowrap;
+  }
+
+  .button:disabled {
+    @apply cursor-wait opacity-65;
+  }
+
+  .button-primary {
+    @apply bg-studio text-white hover:bg-control;
+  }
+
+  .button-secondary {
+    @apply border border-line bg-paper text-ink hover:bg-subtle;
+  }
+
+  .button-quiet {
+    @apply min-h-8 px-2 font-medium text-muted hover:bg-subtle hover:text-ink;
+  }
+
+  .button-play {
+    @apply bg-stage-highlight text-studio hover:bg-neutral-200;
+  }
+
+  .preview-panel {
+    @apply overflow-hidden rounded-lg border border-line bg-paper;
+  }
+
+  .preview-dialog {
+    position: static;
+    margin: 0;
+    width: 100%;
+    max-width: none;
+    max-height: none;
+  }
+
+  .preview-dialog:modal {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  :root:has(.preview-dialog:modal) {
+    overflow: hidden;
+  }
+
+  .preview-dialog:modal .preview-field {
+    height: 100%;
+    container-type: size;
+  }
+
+  .preview-dialog:modal .art-stage {
+    width: min(100cqw, 100cqh);
+    max-width: none;
+  }
+
+  .preview-dialog:modal .art-stage > svg {
+    height: 100%;
+    max-height: none;
+    max-width: none;
+  }
+
+  .preview-toggle {
+    @apply inline-flex min-h-8 cursor-pointer items-center justify-center gap-1 rounded px-1.5 text-xs font-medium whitespace-nowrap text-muted hover:bg-subtle hover:text-ink aria-pressed:bg-ink aria-pressed:text-white sm:gap-1.5 sm:px-2.5;
+  }
+
+  .motion-toggle {
+    @apply inline-flex min-h-8 cursor-pointer items-center justify-center gap-1 rounded border border-transparent px-2 text-xs font-medium whitespace-nowrap text-muted hover:bg-subtle hover:text-ink aria-pressed:border-line aria-pressed:bg-subtle aria-pressed:text-ink;
+  }
+
+  .preview-field {
+    --board-inset: clamp(12px, 1.5vw, 20px);
+    display: grid;
+    place-items: center;
+    position: relative;
+    background-color: #202020;
+    background-image: radial-gradient(circle, #fff2 0.8px, transparent 1px);
+    background-size: 20px 20px;
+    padding: clamp(16px, 3vw, 34px);
+  }
+
+  .preview-expand {
+    @apply absolute z-20 size-9 border border-white/25 bg-studio p-0 text-white hover:bg-control;
+    top: var(--board-inset);
+    right: var(--board-inset);
+  }
+
+  .playback-dock {
+    position: absolute;
+    bottom: var(--board-inset);
+    left: var(--board-inset);
+    z-index: 1;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    gap: 8px;
+    width: min(16rem, calc(100% - 2 * var(--board-inset)));
+    max-height: calc(100% - 2 * var(--board-inset));
+    pointer-events: none;
+  }
+
+  .playback-actions {
+    @apply flex shrink-0 flex-wrap gap-2;
+    pointer-events: auto;
+  }
+
+  .playback-toggle {
+    @apply shrink-0 border border-white/25 bg-studio text-white hover:bg-control;
+  }
+
+  .playback-popover {
+    @apply w-full overflow-y-auto rounded-lg border border-white/25 bg-studio p-3 text-white shadow-lg;
+    min-height: 0;
+    pointer-events: auto;
+  }
+
+  .art-stage {
+    @apply grid aspect-square w-full max-w-[500px] place-items-center;
+  }
+
+  .art-stage > svg {
+    @apply block h-auto w-full;
+  }
+
+  .disc-stage > svg {
+    filter: drop-shadow(0 4px 9px #0007);
+  }
+
+  .preview-field-motion .art-stage {
+    max-width: min(500px, 54vh);
+  }
+
+  .art-stage-motion > svg {
+    @apply max-h-[350px] max-w-[350px] overflow-hidden rounded;
+  }
+
+  .select-control {
+    @apply min-h-8 w-full cursor-pointer appearance-none rounded border border-line bg-paper py-1 pr-7 pl-2 text-[13px] font-medium hover:border-control;
+  }
+
+  .example-option {
+    @apply relative flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded border border-line px-2 text-[13px] font-medium hover:bg-subtle;
+  }
+
+  .example-option:has(:checked) {
+    @apply border-ink bg-subtle font-semibold text-ink;
+  }
+
+  .example-option:has(:focus-visible) {
+    outline: 2px solid var(--color-control);
+    outline-offset: 2px;
+  }
+
+  .value-readout {
+    @apply px-1.5 py-0.5 text-right font-mono text-[11px] font-medium tabular-nums text-ink;
+  }
+
+  .range-control {
+    --range-active: var(--color-control);
+    --range-track: #cfcfcf;
+    appearance: none;
+    display: block;
+    width: 100%;
+    height: 16px;
+    cursor: pointer;
+    background: transparent;
+  }
+
+  .range-dark {
+    --range-active: var(--color-stage-highlight);
+    --range-track: #666;
+  }
+
+  .preview-number {
+    appearance: textfield;
+  }
+
+  .preview-number::-webkit-inner-spin-button,
+  .preview-number::-webkit-outer-spin-button {
+    appearance: none;
+  }
+
+  .range-control::-webkit-slider-runnable-track {
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(to right, var(--range-active) var(--range-fill, 0%), var(--range-track) var(--range-fill, 0%));
+  }
+
+  .range-control::-moz-range-track {
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(to right, var(--range-active) var(--range-fill, 0%), var(--range-track) var(--range-fill, 0%));
+  }
+
+  .range-control::-webkit-slider-thumb {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    margin-top: -6px;
+    border-radius: 50%;
+    background: var(--range-active);
+  }
+
+  .range-control::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--range-active);
+  }
+}
+
+.exposure-layer {
+  opacity: 1;
+}
+
+.exposure-dim {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exposure-dim {
+    opacity: 1;
+  }
+}
