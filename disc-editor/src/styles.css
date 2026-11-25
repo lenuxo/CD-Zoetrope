@@ -80,17 +80,23 @@
     overflow: hidden;
   }
 
-  .preview-dialog:modal .preview-field {
+  .preview-dialog:modal .preview-field,
+  .preview-field:fullscreen {
     height: 100%;
     container-type: size;
+    background: #000;
   }
 
-  .preview-dialog:modal .art-stage {
+  .preview-field:fullscreen {
+    width: 100%;
+  }
+
+  :is(.preview-dialog:modal, .preview-field:fullscreen) .art-stage {
     width: min(100cqw, 100cqh);
     max-width: none;
   }
 
-  .preview-dialog:modal .art-stage > svg {
+  :is(.preview-dialog:modal, .preview-field:fullscreen) .art-stage > svg {
     height: 100%;
     max-height: none;
     max-width: none;
@@ -117,14 +123,14 @@
 
   .preview-expand {
     @apply absolute z-20 size-9 border border-white/25 bg-studio p-0 text-white hover:bg-control;
-    top: var(--board-inset);
-    right: var(--board-inset);
+    top: max(var(--board-inset), env(safe-area-inset-top));
+    right: max(var(--board-inset), env(safe-area-inset-right));
   }
 
   .playback-dock {
     position: absolute;
-    bottom: var(--board-inset);
-    left: var(--board-inset);
+    bottom: max(var(--board-inset), env(safe-area-inset-bottom));
+    left: max(var(--board-inset), env(safe-area-inset-left));
     z-index: 1;
     display: flex;
     flex-direction: column-reverse;

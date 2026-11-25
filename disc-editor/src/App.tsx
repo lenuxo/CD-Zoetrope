@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ChangeEventHandler, CSSProperties, ReactNode } from 'react';
 import {
   ChevronDown, CircleDot, Disc3, Download, Fish, Image,
   RotateCcw, Ruler, ScanLine, SlidersHorizontal, Zap,
 } from 'lucide-react';
 import { disc, layout, pngDpi, pngSide } from './disc';
+import Guide from './Guide';
 import Preview from './Preview';
 import { download, renderPng } from './export';
 import { bandRange, defaults, ranges } from './settings';
@@ -66,6 +67,7 @@ function RangeSetting({ spec, value, onChange, detail }: RangeSettingProps) {
 }
 
 export default function App() {
+  const [showGuide, setShowGuide] = useState(() => window.location.hash === '#/guide');
   const [settings, setSettings] = useState(defaults);
   const [resetCount, setResetCount] = useState(0);
   const [exporting, setExporting] = useState(false);
@@ -74,6 +76,20 @@ export default function App() {
   const geometry = layout(settings);
   const { slots, outerTrack, innerTrack, ballRadius } = geometry;
   const stripeWidth = Math.PI * (outerTrack + innerTrack) / (2 * slots);
+
+  useEffect(() => {
+    function readRoute() {
+      setShowGuide(window.location.hash === '#/guide');
+    }
+    window.addEventListener('hashchange', readRoute);
+    return () => window.removeEventListener('hashchange', readRoute);
+  }, []);
+
+  useEffect(() => {
+    document.title = `CD Zoetrope · ${showGuide ? '原理与设计' : '测试盘编辑器'}`;
+    window.scrollTo(0, 0);
+  }, [showGuide]);
+
   function update<Key extends keyof DiscSettings>(key: Key, value: DiscSettings[Key]) {
     setSettings((current) => ({ ...current, [key]: value }));
   }
@@ -116,11 +132,17 @@ export default function App() {
     <div className="min-h-screen bg-workspace font-sans text-ink">
       <header className="border-b border-line bg-paper">
         <div className={shellClass + ' flex flex-wrap items-center justify-between gap-x-5 gap-y-3 py-3.5 sm:py-4'}>
-          <div className="flex items-center gap-3">
-            <span className="grid size-9 place-items-center rounded bg-studio text-white"><Disc3 size={22} strokeWidth={1.65} aria-hidden="true" /></span>
-            <strong className="brand-type text-xl tracking-tight">CD Zoetrope</strong>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <a href="#/" className="flex items-center gap-3">
+              <span className="grid size-9 place-items-center rounded bg-studio text-white"><Disc3 size={22} strokeWidth={1.65} aria-hidden="true" /></span>
+              <strong className="brand-type text-xl tracking-tight">CD Zoetrope</strong>
+            </a>
+            <nav aria-label="主导航" className="flex gap-1">
+              <a href="#/" aria-current={showGuide ? undefined : 'page'} className="button button-quiet aria-[current=page]:bg-subtle aria-[current=page]:text-ink">编辑器</a>
+              <a href="#/guide" aria-current={showGuide ? 'page' : undefined} className="button button-quiet aria-[current=page]:bg-subtle aria-[current=page]:text-ink">原理与设计</a>
+            </nav>
           </div>
-          <div className="flex flex-wrap gap-2" aria-label="导出盘面">
+          {!showGuide && <div className="flex flex-wrap gap-2" aria-label="导出盘面">
             <button id="save-png" type="button" className="button button-secondary" disabled={exporting} onClick={exportPng}
               title={`${pngSide} × ${pngSide} 像素，${pngDpi} DPI`}>
               <Image size={16} aria-hidden="true" />{exporting ? '正在导出…' : '下载 PNG'}
@@ -128,10 +150,11 @@ export default function App() {
             <button id="save" type="button" className="button button-primary" onClick={exportSvg}>
               <Download size={16} aria-hidden="true" />下载 SVG
             </button>
-          </div>
+          </div>}
         </div>
       </header>
-      <main className={shellClass + ' pt-7 pb-9 sm:pt-9'}>
+      {showGuide && <Guide />}
+      <main hidden={showGuide} className={shellClass + ' pt-7 pb-9 sm:pt-9'}>
         <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 sm:mb-7">
           <div>
             <h1 className="text-[29px] leading-tight font-bold tracking-tight sm:text-[36px]">测试盘编辑器</h1>
@@ -145,7 +168,7 @@ export default function App() {
         </div>
         {exportError && <p role="alert" className="mb-4 rounded border border-ink bg-paper px-3 py-2 text-sm font-medium text-ink">PNG 导出失败，请重试。</p>}
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-          <Preview settings={settings} geometry={geometry} resetCount={resetCount} />
+          <Preview settings={settings} geometry={geometry} resetCount={resetCount} active={!showGuide} />
           <aside className="overflow-hidden rounded-lg border border-line bg-paper">
             <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-3.5 sm:px-5">
               <h2 className="flex items-center gap-2 text-base font-bold"><SlidersHorizontal size={17} className="text-muted" aria-hidden="true" />盘面设置</h2>

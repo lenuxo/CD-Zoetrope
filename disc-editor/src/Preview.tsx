@@ -137,14 +137,16 @@ interface PreviewProps {
   settings: DiscSettings;
   geometry: DiscLayout;
   resetCount: number;
+  active: boolean;
 }
 
-export default function Preview({ settings, geometry, resetCount }: PreviewProps) {
+export default function Preview({ settings, geometry, resetCount, active }: PreviewProps) {
   const { count, direction, example, guides, repeats } = settings;
   const { slots, isBall } = geometry;
   const [mode, setMode] = useState<PreviewMode>('disc');
   const [lastMotionMode, setLastMotionMode] = useState<MotionMode>('rotation');
   const [fullWindow, setFullWindow] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [frame, setFrame] = useState(0);
@@ -153,6 +155,7 @@ export default function Preview({ settings, geometry, resetCount }: PreviewProps
   const [flash, setFlash] = useState({ index: 0, lit: true });
   const [rpm, setRpm] = useState(cdState(0).rpm);
   const previewDialog = useRef<HTMLDialogElement>(null);
+  const previewField = useRef<HTMLDivElement>(null);
   const windowToggle = useRef<HTMLButtonElement>(null);
   const rotor = useRef<SVGGElement>(null);
   const angle = useRef(0);
@@ -168,6 +171,29 @@ export default function Preview({ settings, geometry, resetCount }: PreviewProps
     // Keep the same preview and playback state when entering the modal top layer.
     if (previewDialog.current) previewDialog.current.open = true;
   }, []);
+
+  useEffect(() => {
+    function syncFullscreen() {
+      const entered = document.fullscreenElement === previewField.current;
+      setFullscreen(entered);
+      if (entered && !active) void document.exitFullscreen().catch(() => {});
+    }
+    document.addEventListener('fullscreenchange', syncFullscreen);
+    return () => document.removeEventListener('fullscreenchange', syncFullscreen);
+  }, [active]);
+
+  useEffect(() => {
+    if (active) return;
+    setPlaying(false);
+    if (document.fullscreenElement === previewField.current) {
+      void document.exitFullscreen().catch(() => {});
+    }
+    if (previewDialog.current?.matches(':modal')) {
+      previewDialog.current.close();
+      previewDialog.current.open = true;
+      setFullWindow(false);
+    }
+  }, [active]);
 
   useEffect(() => {
     setPlaying(false);
@@ -279,13 +305,38 @@ export default function Preview({ settings, geometry, resetCount }: PreviewProps
     windowToggle.current?.focus({ preventScroll: true });
   }
 
+  async function toggleFullscreen() {
+    if (fullWindow) {
+      changeWindow(false);
+      return;
+    }
+    if (fullscreen) {
+      await document.exitFullscreen().catch(() => {});
+      return;
+    }
+    const field = previewField.current;
+    if (document.fullscreenEnabled && field?.requestFullscreen) {
+      try {
+        await field.requestFullscreen();
+        return;
+      } catch {
+        // A browser or an embedding page can deny native fullscreen.
+        if (field.closest('[hidden]')) return;
+      }
+    }
+    changeWindow(true);
+  }
+
+  const expanded = fullscreen || fullWindow;
+  const fullscreenLabel = fullscreen ? '退出全屏' : fullWindow ? '退出全窗口预览' :
+    document.fullscreenEnabled ? '全屏预览' : '全窗口预览';
   const isSimulation = mode === 'rotation' || mode === 'strobe';
   const inMotionPreview = mode !== 'disc';
   const displayName = isBall ? '小球' : '游鱼';
 
   return (
     <section aria-label="预览工作区" className="preview-panel">
-      <div inert={fullWindow} className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 py-2.5 sm:px-5 sm:py-3">
+      <div inert={expanded} className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 py-2.5 sm:px-5 sm:py-3">
         <div className={`hidden items-center gap-2.5 text-sm font-semibold text-ink ${inMotionPreview ? 'xl:flex' : 'sm:flex'}`}>
           <ScanLine size={17} className="text-muted" aria-hidden="true" />预览工作区
         </div>
@@ -315,11 +366,11 @@ export default function Preview({ settings, geometry, resetCount }: PreviewProps
         event.preventDefault();
         changeWindow(false);
       }}>
-        <div className={mode === 'disc' ? 'preview-field' : 'preview-field preview-field-motion'}>
+        <div ref={previewField} className={mode === 'disc' ? 'preview-field' : 'preview-field preview-field-motion'}>
           <button ref={windowToggle} type="button" className="button preview-expand"
-            aria-label={fullWindow ? '退出全窗口预览' : '全窗口预览'} title={fullWindow ? '退出全窗口预览（Esc）' : '全窗口预览'}
-            onClick={() => changeWindow(!fullWindow)}>
-            {fullWindow ? <Minimize2 size={17} aria-hidden="true" /> : <Maximize2 size={17} aria-hidden="true" />}
+            aria-label={fullscreenLabel} title={fullscreenLabel}
+            onClick={toggleFullscreen}>
+            {expanded ? <Minimize2 size={17} aria-hidden="true" /> : <Maximize2 size={17} aria-hidden="true" />}
           </button>
           {mode === 'strobe' ? (
             <div id="stage" className="art-stage" role="img" aria-label={`${displayName}频闪模拟`}>
@@ -372,7 +423,7 @@ export default function Preview({ settings, geometry, resetCount }: PreviewProps
           )}
         </div>
       </dialog>
-      <div inert={fullWindow} className="border-t border-line px-4 py-3 sm:px-5">
+      <div inert={expanded} className="border-t border-line px-4 py-3 sm:px-5">
         <div id="caption" className="space-y-1 text-xs leading-relaxed text-muted">
           {mode === 'disc' && <p className="flex flex-wrap gap-x-5 gap-y-1">
             <span><strong className="text-ink">{count} 帧</strong> × {repeats} 组</span>
